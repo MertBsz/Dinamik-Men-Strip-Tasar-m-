@@ -1,0 +1,66 @@
+Imports System.Drawing.Text
+Imports System.Data.SqlClient
+Imports System.Windows.Forms.VisualStyles.VisualStyleElement
+
+Public Class Form1
+    Dim baglanti As New SqlConnection
+    Dim cmd As New SqlCommand
+    Dim cmd2 As New SqlCommand
+    Dim SORGU As String
+    Dim dr2 As SqlDataReader
+    Dim amenu, altmenu As String
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        baglanti.ConnectionString = "Data Source=server Adı; Initial Catalog=Veritabanı Adı; Integrated Security=True" 'bağlantı stringimizi burada belirliyoruz.
+        cmd.CommandText = "select Id,menu1_Ad from Table_1"
+        cmd.Connection = baglanti
+        Veri_okuma() 'aşağıda yazdığımız fonksiyonumuzu çalıştırıyoruz.
+
+    End Sub
+    Public Class dizi
+        Public menu1_Id As Int32
+        Public menu2_Ad As String
+    End Class
+    Public Class ustMenuDizi
+        Public Id As Int32
+        Public menu1_Ad As String
+    End Class
+    Private Sub Veri_okuma()
+        Dim dr As SqlDataReader  'veritabanından okuma işlemini yapacağımız değişkeni belirliyoruz.
+        Dim sayac As Integer = 0 'döngülerde kullanılacak olan sayaclarımızı tanımlıyoruz.
+        Dim ustMenuDizi = New List(Of ustMenuDizi)()
+        Dim dizi = New List(Of dizi)() 'dizilerimizi tanımlıyoruz
+        Dim sayac3 As Integer = 0
+
+        baglanti.Open() 'veritabanı ile olan iletişimimizi başlatıyoruz.
+        dr = cmd.ExecuteReader ' dr değişkeni ile veritabanına sorgumuzu gönderip okuma işlemini yapıyoruz.
+
+
+        Do While dr.Read() AndAlso sayac = 0 <= ustMenuDizi.Count
+            ustMenuDizi.Add(New ustMenuDizi() With {.Id = (dr("Id")), .menu1_Ad = (dr("menu1_Ad").ToString())})
+            sayac += 1
+        Loop
+
+        dr.Close()
+        Do While sayac3 < ustMenuDizi.Count
+            Dim item As New ToolStripMenuItem(ustMenuDizi(sayac3).menu1_Ad)
+            MenuStrip1.Items.Add(item)
+
+            SORGU = ustMenuDizi(sayac3).Id
+            cmd2.CommandText = "select Menu1_Id,menu2_Ad from Table_2 WHERE Menu1_Id = '" + SORGU + "'" 'okuma işlemi için veritabanında dönecek olan sorgumuz.
+            cmd2.Connection = baglanti
+            dr2 = cmd2.ExecuteReader()
+
+            Do While dr2.Read()
+                altmenu = Trim(dr2(1))
+
+                Dim subitem As New ToolStripMenuItem(amenu)
+                item.DropDownItems.Add(altmenu)
+            Loop
+
+            dr2.Close()
+            sayac3 += 1
+        Loop
+        baglanti.Close() 'veritabanıyla olan bağlantımızı kesiyoruz.
+    End Sub
+
+End Class
